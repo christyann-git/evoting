@@ -1,0 +1,105 @@
+<% if(typeof errors != 'undefined') { %>
+	<% errors.forEach(function(error){ %>
+		<div class="alert alert-warning alert_dismissible fade show" role="alert">
+  		<%= error.msg %>
+  		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+		</div>
+		
+	<% }); %>
+<% } %>
+
+
+
+<% if(typeof votes != 'undefined') { %>
+  <% if(votes.length != 0) { %>
+  <h1 class="h3 mb-3 fw-normal">Votes created</h1>
+  <div class="accordion" id="accordionExample">
+    <% votes.forEach(function(vote){ %>
+      
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        <strong><%= vote.intitule %></strong>
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <strong>l'id du vote : <%= vote._id %></strong><br>
+        <strong>candidats :</strong>
+        <% candidats.forEach(function(candidat){ %>
+            <% if(candidat.id_vote == vote._id) { %>
+              <%= candidat.name %>
+            <% }; %>
+        <% }); %>
+        <div>
+        <a class="navbar-brand" href="/dashboard?vote= <%=vote._id %>">informations</a>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+    <% }); %>
+  </div>  
+  <% } %>
+<% } %>
+
+
+<% if(typeof votants != 'undefined') { %>
+  <% if(votants.length != 0) { %>
+  <div>
+    <h1 class="h3 mb-3 fw-normal">Votes in which you participated</h1>
+   </div>
+  <div class="accordion" id="accordionExample1">
+    <% votants.forEach(function(votant){ %>
+      
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        <strong><%= votant.intitule %></strong>
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample1">
+      <div class="accordion-body">
+        <strong>l'id du vote : <%= votant.id_vote %></strong><br>
+        
+      </div>
+    </div>
+  </div>
+ 
+    <% }); %>
+  </div>  
+  <% } %>
+<% } %>
+
+
+
+<% if(success_msg != ''){ %>
+	<div class="alert alert-success alert_dismissible fade show" role="alert">
+  		<%= success_msg %>
+  		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+	</div>
+<% } %>
+
+<% if(error_msg != ''){ %>
+	<div class="alert alert-warning alert_dismissible fade show" role="alert">
+  		<%= error_msg %>
+  		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+	</div>
+<% } %>
+
+<% if(error != ''){ %>
+  <div class="alert alert-warning alert_dismissible fade show" role="alert">
+      <%= error %>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  </div>
+<% } %>
+
+

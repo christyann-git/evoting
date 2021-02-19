@@ -1,0 +1,182 @@
+<head>
+  <script type="text/javascript" src="js/paillierBigint.index.browser.bundle.iife.js"></script>
+  <script type="text/javascript" src="js/bigintConversion.index.browser.bundle.iife.js"></script>
+  <script type="text/javascript" src="js/cryptico.js"></script>
+  <script type="text/javascript" src="/socket.io/socket.io.js"></script>  
+  <style>
+		body {
+		  padding: 20px;
+		}
+		button {
+		  margin-top: 20px;
+		  line-height: 60px;
+		  font-weight: bold;
+		  padding: 0 40px;
+		  background: salmon;
+		  border: none;
+		}
+		button:hover {
+		  background: lightsalmon;
+		}
+  </style>
+</head>
+<body>
+	Echange de cles
+  <script>
+  	var publicKeyString;
+
+ //  	const PaillierPublicKey = class {
+ //  		constructor(n, _n2, g) {
+ //    		this.n = n;
+ //    		this._n2 = _n2;
+ //    		this.g = g;
+ //  		} 
+	// };
+
+
+	function MakeButton (ident) {
+		document.write('<p><button id="Btn'+ident+'" ');
+		document.write('onClick="sendVote('+ident+')">');
+		document.writeln('Candidate '+(ident+1)+'</button></p>');
+	}
+
+	function MakeButtonTable (NoOfButtons) {
+  		for (var i=0; i<NoOfButtons; i++) {
+    		MakeButton(i);
+		}
+	}
+
+	function createRSAKey () {
+		var passphrase = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+		var aRSAKey = cryptico.generateRSAKey(passphrase, 1024)
+		// console.log(aRSAKey)
+		return aRSAKey
+	}
+
+	async function sendPublicKey (socket, iRSAKey) {
+		publicKeyString = cryptico.publicKeyString(iRSAKey)
+		// console.log("My public key : ", publicKeyString)
+		socket.emit('sendPublicKey', publicKeyString);
+	}
+
+	function createSecret () {
+		return String(Math.floor(Math.random() * 10000000));
+
+	}
+
+	function sendSecret (secret, candidate, receiverKey, iRSAKey) {
+		var secretEncrypted = cryptico.encrypt(secret, receiverKey, iRSAKey)
+		// console.log("SEND SECRET :")
+		// console.log("RSAKey : ", iRSAKey)
+		// console.log("receiverKey : ", receiverKey)
+		// console.log("secret = ", secret)
+		// console.log("secret encrypted = ", secretEncrypted)
+		socket.emit('secret', {"receiverKey" : receiverKey, "secretEncrypted" : secretEncrypted.cipher, "candidate": candidate})
+	}
+
+	function decryptSecret (secret, iRSAKey) {
+		// console.log("RECEIVE SECRET :")
+		// console.log("secret encrypted = ", secret)
+		// console.log("secret decrypted = ", cryptico.decrypt(secret, iRSAKey))
+		return cryptico.decrypt(secret, iRSAKey)
+	}
+	
+	function chooseReceiverKey (voters) {
+		var receiverKey;
+
+		while (receiverKey == undefined || receiverKey == publicKeyString)
+		{
+			var voter = Math.floor((Math.random() * voters.length))
+			receiverKey = voters[voter]
+		}
+		return receiverKey;
+	}
+
+	function sendVote (ident) {
+		var vote;
+		var voteEncrypted;
+		var	button;
+
+		for (var i = 0; i < nbCandidates; i++) {
+			button = "Btn"+ String(i)
+			document.getElementById(button).disabled = true; 
+		}
+		for (var i = 0; i < nbCandidates; i++) {
+			// console.log("Vote pour le candidat ", i, ":")
+			if (i == ident) {
+				vote = 1n + BigInt(mySecrets[i]) + BigInt(theirSecrets[i]);
+				// console.log("vote = 1 + ", BigInt(mySecrets[i]), " + ", BigInt(theirSecrets[i]), " = ", vote)				
+			}
+			else{
+				vote = 0n + BigInt(mySecrets[i]) + BigInt(theirSecrets[i]);				
+				// console.log("vote = 0 + ", BigInt(mySecrets[i]), " + ", BigInt(theirSecrets[i]), " = ", vote)				
+			}
+			// console.log("paillierPublicKey : ", paillierPublicKey)	
+			voteEncrypted = paillierPublicKey.encrypt(vote)
+			// console.log("voteEncrypted : ", voteEncrypted)
+			// console.log("String(voteEncrypted) : ", String(voteEncrypted))
+			// console.log("String(voteEncrypted) : ", String(voteEncrypted))
+			// console.log("bigintConversion.bigintToText(voteEncrypted) : ", bigintConversion.bigintToText(voteEncrypted))
+			socket.emit('vote', {"voteEncrypted" : String(voteEncrypted), "candidate" : i})
+		}
+
+	}
+
+	//Etape 1 : Le client se connecte au serveur
+	var socket = io.connect();
+	// console.log(" SOCKET:", socket );
+
+	//Etape 2 : Le client envoie sa clé publique au serveur
+	var myRSAKey = createRSAKey()
+	sendPublicKey(socket, myRSAKey)
+
+	//Etape 3 : Quand tous les votants sont connectés, le serveur envoie un tableau [votant][clépublique] et le nombre de possibilités de vote à chaque votant
+	let mySecrets = new Array();
+	let theirSecrets = new Array();
+	socket.on('generateSecrets', (data) => {
+		mySecrets.length = data.nbCandidates;
+		mySecrets.fill(0)
+		theirSecrets.length = data.nbCandidates;
+		theirSecrets.fill(0)
+		for (var i = 0; i < data.nbCandidates; i++) {
+			var secret = createSecret();
+			mySecrets[i] = secret;
+			sendSecret(secret, i, chooseReceiverKey(data.publicKeys), myRSAKey)
+		}
+		// console.log(" mySecrets: ", mySecrets)
+		socket.emit('generateSecretsFinished')
+	}); 
+
+	socket.on('secret', (data, callback) => {
+		secret = decryptSecret(data.secretEncrypted, myRSAKey)
+		theirSecrets[data.candidate] -= parseInt(secret.plaintext);
+		// console.log("updated theirSecrets : ", theirSecrets)
+		callback()
+	})
+
+	//Etape 4 : Quand les votants ont fini de creer et d'echanger leurs secrets, le vote commence
+	var paillierPublicKey;
+	var paillierPublicKeyString;
+	var nbCandidates;
+	socket.on('generateVote', (data) => {
+		document.write('Le vote commence ! Choississez un candidat parmis les suivants :</br>')
+		paillierPublicKey = new paillierBigint.PublicKey(BigInt(data.paillierPublicKeyN), BigInt(data.paillierPublicKeyG))
+		nbCandidates = data.nbCandidates;
+		MakeButtonTable(data.nbCandidates);
+	})
+
+	socket.on('voteFinish', (data) => {
+		result_candidate = JSON.parse(data.result_string)
+		document.write('<p>Le vote est fini!</p>')
+		document.write("<p>Il y a eu ", data.processedVotes / nbCandidates, " votes, place au depouillement : </p>")
+		for (var i = 0; i < nbCandidates; i++) {
+				// console.log("result[i] (decrypted) : ", result_candidate)
+				document.write("<p>Le candidat ", i + 1, " a ", result_candidate[i], " votes (", result_candidate[i] / nbCandidates * 100, "%)</p>")
+			}
+
+	})
+
+	//Etape 6 : Dépouillement
+
+  </script>
+</body> 

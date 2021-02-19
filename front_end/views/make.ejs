@@ -1,0 +1,18 @@
+<header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-body border-bottom shadow-sm">
+  <p class="h5 my-0 me-md-auto fw-normal"><a class="navbar-brand" href="/">E-voting</a> </p>
+</header>
+<br>
+<main class="form-signin">
+  
+  <p class="h5 my-0 me-md-auto fw-normal"><a class="navbar-brand" href="/dashboard">Back</a> </p>
+  <br>
+  <form class="container" action="/vote/make" method="POST">
+    <input type="text" id="inputEmail" class="form-control" placeholder="Entrer l'id vote" required autofocus name="id_vote" >
+    <br>
+    <%- include ("./partial/alert"); %>
+    <br>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Next Step</button>
+    <p class="mt-5 mb-3 text-muted">&copy; 2017–2021</p>
+  </form>
+</main>
+

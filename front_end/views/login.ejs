@@ -1,0 +1,29 @@
+<header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-body border-bottom shadow-sm">
+  <p class="h5 my-0 me-md-auto fw-normal"><a class="navbar-brand" href="/">E-voting</a> </p>
+  <nav class="my-2 my-md-0 me-md-3">
+    
+    <a class="p-2 text-dark" href="/users/register">Sign in</a>
+  </nav>
+  
+  <a class="btn btn-outline-primary" href="/users/login">Sign up</a>
+</header>
+<br>
+<main class="form-signin">
+  <%- include ("./partial/alert"); %>
+  <form class="container" action="/users/login" method="POST">
+
+    <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+    <label for="inputEmail" class="visually-hidden">Email address</label>
+    <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus name="email" value="<% typeof email != 'undefined' ? email : '' %>" >
+    <br>
+    <label for="inputPassword" class="visually-hidden">Password</label>
+    <input type="password" id="inputPassword" class="form-control" placeholder="Password" required name="password">
+    <div class="checkbox mb-3">
+      <label>
+        <input type="checkbox" value="remember-me"> Remember me
+      </label>
+    </div>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+    <p class="mt-5 mb-3 text-muted">&copy; 2017–2021</p>
+  </form>
+</main>
